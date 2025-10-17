@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Tribologie</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- === Page de connexion === -->
+  <div id="loginBox">
+    <div class="login-card">
+      <h2>Connexion</h2>
+      <form onsubmit="loginUser(event)">
+        <label for="username">Utilisateur</label>
+        <input type="text" id="username" placeholder="Utilisateur" required />
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" placeholder="Mot de passe" required />
+        <button type="submit">Se connecter</button>
+      </form>
+      <p id="error-msg"></p>
+    </div>
+  </div>
+
+  <!-- === Dashboard principal === -->
+  <div id="dashboard" class="hidden">
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">T</div>
+        <h3>TRIBOLOGIE</h3>
+      </div>
+      <nav>
+        <ul>
+          <li class="active" onclick="showSection('dashboard', this)">Dashboard</li>
+          <li onclick="showSection('temp', this)">Température</li>
+          <li onclick="showSection('press', this)">Pression</li>
+          <li onclick="showSection('vib', this)">Vibration</li>
+          <li onclick="showSection('niveau', this)">Niveau</li>
+          <li onclick="showSection('cycle', this)">Cycle</li>
+        </ul>
+      </nav>
+      <div class="footer">Pompes connectées : 12</div>
+    </aside>
+
+    <main class="content">
+      <header>
+        <h1>APERÇU DU SYSTÈME</h1>
+      </header>
+
+      <section class="dashboard-grid">
+        <!-- Température -->
+        <div class="card wide" id="card-temp">
+          <h3>Température (°C)</h3>
+          <canvas id="tempChart"></canvas>
+        </div>
+
+        <!-- Pression -->
+        <div class="card" id="card-press">
+          <h3>Pression (Bar)</h3>
+          <canvas id="pressChart"></canvas>
+        </div>
+
+        <!-- Vibration -->
+        <div class="card" id="card-vib">
+          <h3>Vibration</h3>
+          <canvas id="vibChart"></canvas>
+        </div>
+
+        <!-- Niveau -->
+        <div class="card" id="card-niveau">
+          <h3>Niveau de la Pompe</h3>
+          <div class="tank" id="tank">
+            <div class="tank-fill" id="tankFill"></div>
+          </div>
+          <div id="niveauBadge" class="status-pill green">NORMAL</div>
+          <p id="niveauText">Niveau : --</p>
+        </div>
+
+        <!-- Cycle -->
+        <div class="card wide" id="card-cycle">
+          <h3>Cycle (ON/OFF)</h3>
+          <canvas id="cycleChart"></canvas>
+          <p>
+            <strong>État :</strong>
+            <span id="cycleState">OFF</span>
+            <span id="led" class="led off"></span><br>
+            <strong>Temps restant :</strong>
+            <span id="cycleRemaining">--:--:--</span>
+          </p>
+
+          <div class="cycle-controls" style="margin-top:10px; text-align:center;">
+            <p>
+              <strong>ON :</strong>
+              <span id="onValue">--</span> 
+              <button type="button" onclick="changerCycle('on', 2)">+</button>
+              <button type="button" onclick="changerCycle('on', -2)">−</button>
+            </p>
+            <p>
+              <strong>OFF :</strong>
+              <span id="offValue">--</span> 
+              <button type="button" onclick="changerCycle('off', 15)">+</button>
+              <button type="button" onclick="changerCycle('off', -15)">−</button>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- === Script principal (graphes + cycle) === -->
+  <script src="script.js"></script>
+
+  
+
+  
+</body>
+</html>
