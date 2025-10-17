@@ -18,7 +18,7 @@ function formatTime(sec) {
   return `${m}:${s}`;
 }
 
-// ==== Connexion
+// ==== Connexion utilisateur
 function loginUser(e) {
   e.preventDefault();
   const u = document.getElementById("username").value.trim();
@@ -93,7 +93,7 @@ function initCharts() {
 // ====================== MISE À JOUR DES DONNÉES ======================
 function startDashboard() {
   updateData();
-  setInterval(updateData, 1000);
+  setInterval(updateData, 2000); // actualisation toutes les 2 secondes
 }
 
 async function updateData() {
@@ -103,6 +103,8 @@ async function updateData() {
     const json = await response.json();
     const d = json.RPI_001 || {};
 
+    console.log("🌐 Données reçues du cloud:", d); // Debug
+
     const temperature = parseFloat(d.temperature || 0);
     const niveau = d.niveau || "normal";
     const etat = d.etat || "OFF";
@@ -110,7 +112,7 @@ async function updateData() {
     const on = d.on || 0;
     const off = d.off || 0;
 
-    // 🔹 Graphique température
+    // ===== Température =====
     if (tempChart) {
       tempChart.data.labels.push(label);
       tempChart.data.datasets[0].data.push(temperature);
@@ -121,7 +123,7 @@ async function updateData() {
       tempChart.update("none");
     }
 
-    // 🔹 Mise à jour niveau
+    // ===== Niveau =====
     const niveauEl = document.getElementById("niveauText");
     const badge = document.getElementById("niveauBadge");
     const tankFill = document.getElementById("tankFill");
@@ -143,20 +145,29 @@ async function updateData() {
       }
     }
 
-    // 🔹 LED + cycle
+    // ===== Cycle moteur =====
     document.getElementById("cycleState").textContent = etat;
     document.getElementById("cycleRemaining").textContent = formatTime(restant);
+    document.getElementById("onValue").textContent = formatTime(on);
+    document.getElementById("offValue").textContent = formatTime(off);
+    console.log("Durées actuelles :", { on, off, restant, etat });
+
     const ledEl = document.getElementById("led");
     if (etat === "ON") ledEl.className = "led on";
     else if (etat === "OFF") ledEl.className = "led off";
     else ledEl.className = "led pause";
 
-    // 🔹 Donut progression
+    // ===== Donut =====
     if (cycleChart) {
       let progress = 0;
       if (etat === "ON" && on > 0) progress = ((on - restant) / on) * 100;
       else if (etat === "OFF" && off > 0) progress = ((off - restant) / off) * 100;
-      const color = etat === "ON" ? "#00ff00" : etat === "OFF" ? "#ff0000" : "#888888";
+
+      progress = Math.max(0, Math.min(100, progress));
+      const color =
+        etat === "ON" ? "#00ff00" :
+        etat === "OFF" ? "#ff0000" : "#888888";
+
       cycleChart.data.datasets[0].data = [progress, 100 - progress];
       cycleChart.data.datasets[0].backgroundColor = [color, "#1b355e"];
       cycleChart.update("none");
@@ -164,5 +175,42 @@ async function updateData() {
 
   } catch (error) {
     console.error("Erreur récupération données Render :", error);
+  }
+}
+
+// ====================== CONTRÔLE DES DURÉES (boutons +/-) ======================
+async function changerCycle(type, delta) {
+  try {
+    const res = await fetch("/api/data");
+    const json = await res.json();
+    const d = json.RPI_001 || {};
+
+    let currentOn = d.on || 0;
+    let currentOff = d.off || 0;
+
+    if (type === "on") currentOn = Math.max(2, currentOn + delta);
+    else if (type === "off") currentOff = Math.max(2, currentOff + delta);
+
+    // Envoi vers Render
+    await fetch("/api/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        device_id: "RPI_001",
+        on: currentOn,
+        off: currentOff,
+        etat: d.etat,
+        niveau: d.niveau,
+        temperature: d.temperature,
+        temps_restant: d.temps_restant,
+        contact_ferme: d.contact_ferme,
+      }),
+    });
+
+    console.log("✅ Cycle mis à jour :", { on: currentOn, off: currentOff });
+    await updateData();
+
+  } catch (err) {
+    console.warn("⚠️ Erreur changement cycle:", err);
   }
 }
