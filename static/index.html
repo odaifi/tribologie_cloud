@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Tribologie</title>
+  <title>Dashboard Tribologie Cloud</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <!-- === Page de connexion === -->
   <div id="loginBox">
@@ -40,7 +41,7 @@
           <li onclick="showSection('cycle', this)">Cycle</li>
         </ul>
       </nav>
-      <div class="footer">Pompes connectées : 12</div>
+      <div class="footer">Pompes connectées : <span id="pumpCount">1</span></div>
     </aside>
 
     <main class="content">
@@ -110,9 +111,5 @@
 
   <!-- === Script principal (graphes + cycle) === -->
   <script src="script.js"></script>
-
-  
-
-  
 </body>
 </html>
