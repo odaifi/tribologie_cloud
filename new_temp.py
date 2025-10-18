@@ -5,8 +5,8 @@ import RPi.GPIO as GPIO
 # CONFIGURATION GÉNÉRALE
 # ===============================
 FICHIER_JSON = "/home/pi/dashbord complet/etat.json"
-CLOUD_URL = "https://tribologie-cloud.onrender.com/api/update"  # 🌐 URL Render
-DATA_URL = "https://tribologie-cloud.onrender.com/api/data"     # 🌐 Pour récupérer les valeurs actuelles
+CLOUD_URL = "https://tribologie-cloud.onrender.com/api/update"  # Envoi vers Render
+DATA_URL = "https://tribologie-cloud.onrender.com/api/data"     # Lecture depuis Render
 
 # ===============================
 # CONFIGURATION DES PINS
@@ -32,7 +32,7 @@ state = {
 }
 
 # ===============================
-# DÉTECTION CAPTEUR TEMPÉRATURE DS18B20
+# TEMPÉRATURE (DS18B20)
 # ===============================
 def get_sensor_file():
     base = "/sys/bus/w1/devices/"
@@ -62,7 +62,7 @@ def read_temp():
         return None
 
 # ===============================
-# LOGIQUE MOTEUR
+# LOGIQUE GPIO
 # ===============================
 def lire_contact():
     """Retourne True si contact fermé (autorisation moteur)"""
@@ -73,20 +73,18 @@ def set_relais(on: bool):
     GPIO.output(RELAIS_PIN, GPIO.LOW if on else GPIO.HIGH)
 
 # ===============================
-# ENVOI VERS CLOUD
+# CLOUD
 # ===============================
 def envoyer_vers_cloud(data):
+    """Envoi des données au cloud Render"""
     try:
         r = requests.post(CLOUD_URL, json=data, timeout=5)
         print("🌐 Cloud:", r.status_code, r.text)
     except Exception as e:
         print("⚠️ Erreur cloud:", e)
 
-# ===============================
-# SYNCHRONISATION CLOUD (ON/OFF)
-# ===============================
 def sync_on_off_depuis_cloud():
-    """Vérifie si le cloud a modifié les temps ON/OFF"""
+    """Récupère les nouveaux temps ON/OFF depuis Render"""
     global state
     try:
         r = requests.get(DATA_URL, timeout=3)
@@ -94,64 +92,48 @@ def sync_on_off_depuis_cloud():
         new_on = cloud_data.get("on", state["on"])
         new_off = cloud_data.get("off", state["off"])
         if new_on != state["on"] or new_off != state["off"]:
-            print(f"🔄 Synchronisation Render → Raspberry : ON={new_on}s | OFF={new_off}s")
             state["on"], state["off"] = new_on, new_off
+            print(f"🔄 Synchro Render → Raspberry : ON={new_on}s | OFF={new_off}s")
     except Exception as e:
         print("⚠️ Erreur synchro cloud:", e)
 
 # ===============================
 # BOUCLE PRINCIPALE
 # ===============================
-print("🚀 Système Tribologie démarré : capteurs + moteur + cloud")
+print("🚀 Système Tribologie (synchronisé avec Render) démarré")
 
 try:
     en_pause = False
 
     while True:
-        # 🔁 Synchronisation avec le dashboard
+        # 🔁 Synchroniser avec Render toutes les 2s
         sync_on_off_depuis_cloud()
 
-        # 1️⃣ Lecture des capteurs
+        # Lecture capteurs
         temp = read_temp()
         niveau_gpio = GPIO.input(PIN_NIVEAU)
         etat_niveau = "bas" if niveau_gpio == 0 else "normal"
         contact_ferme = lire_contact()
 
-        # 2️⃣ Gestion de la sécurité (contacteur)
+        # Sécurité contacteur
         if not contact_ferme:
             if not en_pause:
                 en_pause = True
                 state["etat_avant_pause"] = state["etat"]
                 state["etat"] = "PAUSE"
                 set_relais(False)
-            # ⚠️ Continue à lire et envoyer les données même en pause
+                print("⚠️ Contact ouvert → moteur en pause")
 
         else:
-            # Si on revient de pause
             if en_pause:
                 en_pause = False
                 state["etat"] = state.get("etat_avant_pause", "OFF")
+                print("✅ Contact refermé → reprise du cycle")
                 if state["etat"] == "ON":
                     set_relais(True)
 
-                # 🔹 Envoi immédiat après reprise
-                etat = {
-                    "device_id": "RPI_001",
-                    "temperature": temp if temp is not None else "N/A",
-                    "niveau": etat_niveau,
-                    "etat": state["etat"],
-                    "on": state["on"],
-                    "off": state["off"],
-                    "temps_restant": state["temps_restant"],
-                    "contact_ferme": contact_ferme
-                }
-                with open(FICHIER_JSON, "w") as f:
-                    json.dump(etat, f)
-                envoyer_vers_cloud(etat)
-                print("✅ Reprise du cycle après contact fermé")
-
-            # 3️⃣ Gestion du cycle ON/OFF (uniquement si contact fermé)
-            state["temps_restant"] -= 2  # décrémente toutes les 2s
+            # Cycle moteur
+            state["temps_restant"] -= 2
             if state["temps_restant"] <= 0:
                 if state["etat"] == "ON":
                     state["etat"] = "OFF"
@@ -162,7 +144,7 @@ try:
                     state["temps_restant"] = state["on"]
                     set_relais(True)
 
-        # 4️⃣ Données envoyées (cloud + fichier local)
+        # Données à envoyer
         etat = {
             "device_id": "RPI_001",
             "temperature": temp if temp is not None else "N/A",
@@ -174,12 +156,16 @@ try:
             "contact_ferme": contact_ferme
         }
 
+        # Sauvegarde locale + envoi cloud
         with open(FICHIER_JSON, "w") as f:
             json.dump(etat, f)
 
         envoyer_vers_cloud(etat)
 
-        print(f"🌡️ Temp: {temp}°C | Niveau: {etat_niveau} | État moteur: {state['etat']} | Restant: {state['temps_restant']}s | ON={state['on']}s | OFF={state['off']}s")
+        print(f"🌡️ Temp: {temp}°C | Niveau: {etat_niveau} | État: {state['etat']} | "
+              f"Restant: {state['temps_restant']}s | ON={state['on']}s | OFF={state['off']}s | "
+              f"Contact: {'fermé' if contact_ferme else 'ouvert'}")
+
         time.sleep(2)
 
 except KeyboardInterrupt:
