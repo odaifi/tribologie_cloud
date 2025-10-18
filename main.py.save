@@ -1,0 +1,24 @@
+from fastapi import FastAPI from fastapi.middleware.cors import 
+CORSMiddleware import random nano ~/dashboard_pompe/main.py app = 
+FastAPI()
+
+# --- Autoriser ton site web à accéder aux données ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # à restreindre plus tard
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Route pour tes données capteurs ---
+@app.get("/etat.json")
+def lire_etat():
+    # ICI tu peux remplacer par tes vraies mesures
+    data = {
+        "temperature": round(random.uniform(20, 40), 2),
+        "pression": round(random.uniform(1, 10), 2),
+        "niveau": "haut" if random.random() > 0.5 else "bas"
+    }
+    return data
+

@@ -1,0 +1,148 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #3a3ade;
+  color: white;
+  margin: 0;
+  padding: 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 250px 250px 250px; /* 3 colonnes fixes */
+  grid-auto-rows: auto;
+  gap: 25px;
+  justify-content: center;
+}
+
+
+.box {
+  border: 4px solid gray;
+  border-radius: 20px;
+  text-align: center;
+  padding: 20px;
+  background: #4343c9;
+}
+
+.box h2 {
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+.icon {
+  font-size: 50px;
+  margin: 15px 0;
+}
+
+.value {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.cycle-content {
+  font-size: 22px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn {
+  background: white;
+  border: none;
+  color: black;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 5px;
+  margin-left: 4px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #ddd;
+}
+
+.sub {
+  font-size: 14px;
+  color: #ddd;
+  margin-top: 8px;
+}
+
+/* États visuels */
+.ok {
+  border-color: lime;
+  color: lime;
+}
+
+.critical {
+  border-color: red;
+  color: red;
+  animation: blink-red 1s infinite;
+}
+
+.warning {
+  border-color: orange;
+  color: orange;
+  animation: blink-orange 1s infinite;
+}
+
+/* Animations */
+@keyframes blink-red {
+  0%, 100% { border-color: red; color: red; }
+  50% { border-color: transparent; color: white; }
+}
+
+@keyframes blink-orange {
+  0%, 100% { border-color: orange; color: orange; }
+  50% { border-color: transparent; color: white; }
+}
+
+.icon img {
+  width: 60px;
+  height: auto;
+}
+/* === Bloc CYCLE personnalisé === */
+#cycle {
+  grid-column-start: 2;   /* commence en colonne 2 */
+  grid-column-end: 4;     /* finit en colonne 3 → occupe 2 colonnes */
+  border-color: orange;
+  color: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  background: none;   /* retire la couleur interne */
+
+}
+
+
+
+.cycle-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 26px;
+  gap: 12px;
+}
+
+.cycle-content button.btn {
+  background: white;
+  border: none;
+  color: black;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.cycle-content button.btn:hover {
+  background: #ddd;
+}
+
+.on { color: yellow; font-weight: bold; }
+.off { color: red; font-weight: bold; }
+.sub {
+  font-size: 18px;
+  margin-top: 10px;
+}
+

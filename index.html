@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Pompe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grid">
+
+    <!-- Ligne 1 -->
+    <div id="niveau" class="box critical">
+      <h2>NIVEAU</h2>
+      <div class="icon"><img src="images/image 2.JFIF" alt="Niveau" /></div>
+      <p class="value">--</p>
+    </div>
+
+    <div id="temperature" class="box critical">
+      <h2>TEMPÉRATURE</h2>
+      <div class="icon">🌡️</div>
+      <p class="value">-- °C</p>
+    </div>
+
+    <div id="vibration" class="box warning">
+      <h2>VIBRATION</h2>
+      <div class="icon">📳</div>
+      <p class="value">ANORMAL ⚠️</p>
+    </div>
+
+    <!-- Ligne 2 -->
+    <div id="blocage" class="box warning">
+      <h2>BLOCAGE</h2>
+      <div class="icon"><img src="images/image.jpg" alt="Blocage" /></div>
+      <p class="value">DÉTECTÉ</p>
+      <p>SORTIE : 1 2 3</p>
+    </div>
+
+    <!-- === NOUVEAU BLOC CYCLE MOTEUR === -->
+    <div id="cycle" class="box cycle">
+      <h2>CYCLE</h2>
+      <div class="cycle-content">
+        <div>
+          <span id="onValue">15</span> s <span class="on">ON</span>
+          <button class="btn" onclick="changer('on', 1)">+</button>
+          <button class="btn" onclick="changer('on', -1)">−</button>
+        </div>
+        <div>
+          <span id="offValue">15</span> s <span class="off">OFF</span>
+          <button class="btn" onclick="changer('off', 1)">+</button>
+          <button class="btn" onclick="changer('off', -1)">−</button>
+        </div>
+        <p class="sub">Phase : <span id="etatPhase">--</span></p>
+        <p class="sub">Temps restant : <span id="tempsRestant">--</span> s</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- === SCRIPT PRINCIPAL === -->
+  <script>
+  const HOST = "http://192.168.28.64:8081"; // ⚠️ adapte à ton IP locale
+// === Convertit les secondes en hh:mm:ss ===
+function formatHMS(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+  // --- Rafraîchir les capteurs (lecture etat.json) ---
+  async function updateEtat() {
+    try {
+      const response = await fetch("etat.json?nocache=" + Date.now());
+      const data = await response.json();
+
+      // === TEMPÉRATURE ===
+      const tempBox = document.getElementById("temperature");
+      const tempValue = tempBox.querySelector(".value");
+      if (data.temperature !== null && data.temperature !== undefined) {
+        tempValue.textContent = data.temperature + " °C";
+        if (data.temperature >= 30) {
+          tempBox.className = "box critical";
+          tempValue.textContent = "TEMPÉRATURE ÉLEVÉE ⚠️";
+          tempBox.style.animation = "blink-red 1s infinite";
+        } else {
+          tempBox.className = "box ok";
+          tempBox.style.animation = "none";
+        }
+      }
+
+      // === NIVEAU ===
+      const nivBox = document.getElementById("niveau");
+      const nivValue = nivBox.querySelector(".value");
+      const niveau = (data.niveau || "").toUpperCase();
+      if (niveau === "BAS") {
+        nivBox.className = "box critical";
+        nivValue.textContent = "TRÈS BAS ⚠️";
+        nivBox.style.animation = "blink-red 1s infinite";
+      } else if (niveau === "NORMAL") {
+        nivBox.className = "box ok";
+        nivValue.textContent = "NIVEAU NORMAL";
+        nivBox.style.animation = "none";
+      } else {
+        nivBox.className = "box warning";
+        nivValue.textContent = "NIVEAU INCONNU ⚠️";
+      }
+
+    } catch (e) {
+      console.error("Erreur lecture état:", e);
+    }
+  }
+
+  // === PARTIE CYCLE MOTEUR ===
+  let cycleData = { on: 15, off: 15 };
+
+  async function chargerCycle() {
+    try {
+      const res = await fetch(`${HOST}/cycle_state`);
+      const data = await res.json();
+      cycleData.on = Number(data.on) || 15;
+      cycleData.off = Number(data.off) || 15;
+      document.getElementById("onValue").innerText = formatHMS(data.on);
+      document.getElementById("offValue").innerText = formatHMS(data.off);
+
+
+      document.getElementById("etatPhase").textContent = data.etat || "OFF";
+     // --- Conversion secondes -> hh:mm:ss ---
+function formatHMS(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+document.getElementById("tempsRestant").textContent = formatHMS(data.temps_restant || 0);
+
+
+      const cycleBox = document.getElementById("cycle");
+      cycleBox.style.borderColor = data.etat === "ON" ? "yellow" : "red";
+    } catch (e) {
+      console.warn("⚠️ Erreur cycle moteur:", e);
+    }
+  }
+
+  async function envoyerCycle() {
+    try {
+      await fetch(`${HOST}/cycle_update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ on: cycleData.on, off: cycleData.off })
+      });
+    } catch (e) {
+      console.warn("⚠️ Erreur d’envoi cycle:", e);
+    }
+  }
+
+  function changer(type, direction) {
+  // direction = +1 ou -1
+  let increment = 0;
+  if (type === "on") increment = 2;   // ON → ±2s
+  if (type === "off") increment = 15; // OFF → ±15s
+
+  cycleData[type] = Math.max(1, cycleData[type] + (direction * increment));
+
+  // Met à jour l'affichage en hh:mm:ss
+  document.getElementById(type + "Value").innerText = formatHMS(cycleData[type]);
+
+  // Envoie au serveur
+  envoyerCycle();
+}
+
+
+  // === BOUCLE D'ACTUALISATION ===
+  setInterval(() => {
+    updateEtat();
+    chargerCycle();
+  }, 1000);
+
+  chargerCycle();
+  updateEtat();
+  </script>
+</body>
+</html>
+<style>
+body {
+  filter: brightness(0.9); /* 0.5 = sombre, 1.0 = normal, 1.2 = plus clair */
+}
+</style>

@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+import time, json, os, glob
+
+# === CONFIG ===
+SEUIL_TEMP = 20.0  # seuil en °C
+DOSSIER_DASH = "/home/pi/dashboard_pompe"
+FICHIER_JSON = os.path.join(DOSSIER_DASH, "etat.json")
+# ==============
+
+# Trouver automatiquement le capteur DS18B20
+def trouve_fichier_ds18():
+    base = "/sys/bus/w1/devices/"
+    dossiers = glob.glob(base + "28-*")
+    if not dossiers:
+        return None
+    return os.path.join(dossiers[0], "w1_slave")
+
+FICHIER_DS18 = trouve_fichier_ds18()
+
+def lire_temperature():
+    if not FICHIER_DS18 or not os.path.exists(FICHIER_DS18):
+        return None
+    try:
+        with open(FICHIER_DS18_
+
+cd /home/pi/dashboard_pompe
+
