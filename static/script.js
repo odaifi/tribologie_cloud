@@ -93,7 +93,7 @@ function initCharts() {
 // ====================== MISE À JOUR DES DONNÉES ======================
 function startDashboard() {
   updateData();
-  setInterval(updateData, 500); // actualisation toutes les 2 secondes
+  setInterval(updateData, 1000); // actualisation toutes les 2 secondes
 }
 
 async function updateData() {
