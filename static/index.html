@@ -1,115 +1,221 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Tribologie Cloud</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard Tribologie Cloud</title>
+
+<link rel="stylesheet" href="style.css"/>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.section{
+display:block;
+}
+
+.hidden{
+display:none;
+}
+</style>
+
 </head>
 
 <body>
-  <!-- === Page de connexion === -->
-  <div id="loginBox">
-    <div class="login-card">
-      <h2>Connexion</h2>
-      <form onsubmit="loginUser(event)">
-        <label for="username">Utilisateur</label>
-        <input type="text" id="username" placeholder="Utilisateur" required />
-        <label for="password">Mot de passe</label>
-        <input type="password" id="password" placeholder="Mot de passe" required />
-        <button type="submit">Se connecter</button>
-      </form>
-      <p id="error-msg"></p>
-    </div>
-  </div>
 
-  <!-- === Dashboard principal === -->
-  <div id="dashboard" class="hidden">
-    <aside class="sidebar">
-      <div class="logo">
-        <div class="logo-icon">T</div>
-        <h3>TRIBOLOGIE</h3>
-      </div>
-      <nav>
-        <ul>
-          <li class="active" onclick="showSection('dashboard', this)">Dashboard</li>
-          <li onclick="showSection('temp', this)">Température</li>
-          <li onclick="showSection('press', this)">Pression</li>
-          <li onclick="showSection('vib', this)">Vibration</li>
-          <li onclick="showSection('niveau', this)">Niveau</li>
-          <li onclick="showSection('cycle', this)">Cycle</li>
-        </ul>
-      </nav>
-      <div class="footer">Pompes connectées : <span id="pumpCount">1</span></div>
-    </aside>
+<!-- LOGIN -->
+<div id="loginBox">
+<div class="login-card">
 
-    <main class="content">
-      <header>
-        <h1>APERÇU DU SYSTÈME</h1>
-      </header>
+<h2>Connexion</h2>
 
-      <section class="dashboard-grid">
-        <!-- Température -->
-        <div class="card wide" id="card-temp">
-          <h3>Température (°C)</h3>
-          <canvas id="tempChart"></canvas>
-        </div>
+<form onsubmit="loginUser(event)">
 
-        <!-- Pression -->
-        <div class="card" id="card-press">
-          <h3>Pression (Bar)</h3>
-          <canvas id="pressChart"></canvas>
-        </div>
+<label>Utilisateur</label>
+<input type="text" id="username" required>
 
-        <!-- Vibration -->
-        <div class="card" id="card-vib">
-          <h3>Vibration</h3>
-          <canvas id="vibChart"></canvas>
-        </div>
+<label>Mot de passe</label>
+<input type="password" id="password" required>
 
-        <!-- Niveau -->
-        <div class="card" id="card-niveau">
-          <h3>Niveau de la Pompe</h3>
-          <div class="tank" id="tank">
-            <div class="tank-fill" id="tankFill"></div>
-          </div>
-          <div id="niveauBadge" class="status-pill green">NORMAL</div>
-          <p id="niveauText">Niveau : --</p>
-        </div>
+<button type="submit">Se connecter</button>
 
-        <!-- Cycle -->
-        <div class="card wide" id="card-cycle">
-          <h3>Cycle (ON/OFF)</h3>
-          <canvas id="cycleChart"></canvas>
-          <p>
-            <strong>État :</strong>
-            <span id="cycleState">OFF</span>
-            <span id="led" class="led off"></span><br>
-            <strong>Temps restant :</strong>
-            <span id="cycleRemaining">--:--:--</span>
-          </p>
+</form>
 
-          <div class="cycle-controls" style="margin-top:10px; text-align:center;">
-            <p>
-              <strong>ON :</strong>
-              <span id="onValue">--</span> 
-              <button type="button" onclick="changerCycle('on', 2)">+</button>
-              <button type="button" onclick="changerCycle('on', -2)">−</button>
-            </p>
-            <p>
-              <strong>OFF :</strong>
-              <span id="offValue">--</span> 
-              <button type="button" onclick="changerCycle('off', 15)">+</button>
-              <button type="button" onclick="changerCycle('off', -15)">−</button>
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+<p id="error-msg"></p>
 
-  <!-- === Script principal (graphes + cycle) === -->
-  <script src="script.js"></script>
+</div>
+</div>
+
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<aside class="sidebar">
+
+<div class="logo">
+<div class="logo-icon">T</div>
+<h3>TRIBOLOGIE</h3>
+</div>
+
+<nav>
+<ul>
+
+<li class="active" onclick="showSection('dashboard',this)">Dashboard</li>
+<li onclick="showSection('temp',this)">Température</li>
+<li onclick="showSection('press',this)">Pression</li>
+<li onclick="showSection('vib',this)">Vibration</li>
+<li onclick="showSection('niveau',this)">Niveau</li>
+<li onclick="showSection('cycle',this)">Cycle</li>
+
+</ul>
+</nav>
+
+<div class="footer">
+Pompes connectées : <span id="pumpCount">1</span>
+</div>
+
+</aside>
+
+
+<main class="content">
+
+<header>
+<h1>APERÇU DU SYSTÈME</h1>
+</header>
+
+
+<!-- DASHBOARD GENERAL -->
+
+<section id="section-dashboard" class="section">
+
+<div class="dashboard-grid">
+
+<div class="card wide">
+<h3>Température</h3>
+<canvas id="tempChart"></canvas>
+</div>
+
+<div class="card">
+<h3>Pression</h3>
+<canvas id="pressChart"></canvas>
+</div>
+
+<div class="card">
+<h3>Vibration</h3>
+<canvas id="vibChart"></canvas>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- TEMPERATURE -->
+
+<section id="section-temp" class="section hidden">
+
+<h2>Analyse Température</h2>
+
+<div class="card wide">
+<canvas id="tempChart2"></canvas>
+</div>
+
+</section>
+
+
+
+<!-- PRESSION -->
+
+<section id="section-press" class="section hidden">
+
+<h2>Analyse Pression</h2>
+
+<div class="card wide">
+<canvas id="pressChart2"></canvas>
+</div>
+
+</section>
+
+
+
+<!-- VIBRATION -->
+
+<section id="section-vib" class="section hidden">
+
+<h2>Analyse Vibration</h2>
+
+<div class="card wide">
+<canvas id="vibChart2"></canvas>
+</div>
+
+</section>
+
+
+
+<!-- NIVEAU -->
+
+<section id="section-niveau" class="section hidden">
+
+<h2>Niveau de la Pompe</h2>
+
+<div class="tank">
+<div class="tank-fill" id="tankFill"></div>
+</div>
+
+<p id="niveauText">Niveau : --</p>
+
+</section>
+
+
+
+<!-- CYCLE -->
+
+<section id="section-cycle" class="section hidden">
+
+<h2>Cycle Moteur</h2>
+
+<canvas id="cycleChart"></canvas>
+
+<p>
+<strong>État :</strong>
+<span id="cycleState">OFF</span>
+<span id="led" class="led off"></span>
+</p>
+
+<p>
+<strong>Temps restant :</strong>
+<span id="cycleRemaining">--:--:--</span>
+</p>
+
+</section>
+
+
+</main>
+</div>
+
+
+<script src="script.js"></script>
+
+
+<script>
+
+function showSection(section,el){
+
+document.querySelectorAll(".sidebar li").forEach(li=>{
+li.classList.remove("active")
+})
+
+if(el) el.classList.add("active")
+
+document.querySelectorAll(".section").forEach(sec=>{
+sec.classList.add("hidden")
+})
+
+document.getElementById("section-"+section).classList.remove("hidden")
+
+}
+
+</script>
+
 </body>
 </html>
